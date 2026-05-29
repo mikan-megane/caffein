@@ -66,66 +66,44 @@ function supportsPiP() {
     'webkitSetPresentationMode' in vid
 }
 
-async function startPiP() {
-  try {
-    if (vid.readyState < 2) {
-      status.textContent = 'Waiting for video…'
-      await new Promise(r => { vid.oncanplay = r; vid.load() })
-    }
-    await vid.play()
-    if (vid.requestPictureInPicture) {
-      await vid.requestPictureInPicture()
-    } else if (vid.webkitSetPresentationMode) {
-      vid.webkitSetPresentationMode('picture-in-picture')
-    }
-    btn.textContent = 'Stop PiP'
-    btn.classList.add('active')
-    status.textContent = 'PiP active – screen stays on'
-  } catch (e) {
-    status.textContent = 'PiP failed: ' + e.message
-  }
-}
-
-async function stopPiP() {
-  try {
-    if (document.pictureInPictureElement) {
-      await document.exitPictureInPicture()
-    } else if (vid.webkitPresentationMode === 'picture-in-picture') {
-      vid.webkitSetPresentationMode('inline')
-    }
-    btn.textContent = 'Start PiP'
-    btn.classList.remove('active')
-    status.textContent = 'PiP stopped'
-  } catch (e) {
-    status.textContent = 'Error: ' + e.message
-  }
+function updateUI(pipOn) {
+  btn.textContent = pipOn ? 'Stop PiP' : 'Start PiP'
+  btn.classList.toggle('active', pipOn)
+  status.textContent = pipOn ? 'PiP active – screen stays on' : 'PiP stopped'
 }
 
 btn.addEventListener('click', () => {
-  if (btn.textContent === 'Start PiP') {
-    startPiP()
-  } else {
-    stopPiP()
+  if (document.pictureInPictureElement || vid.webkitPresentationMode === 'picture-in-picture') {
+    if (document.exitPictureInPicture) {
+      document.exitPictureInPicture().catch(() => {})
+    } else if (vid.webkitSetPresentationMode) {
+      vid.webkitSetPresentationMode('inline')
+    }
+    return
+  }
+  if (!supportsPiP()) return
+
+  vid.play().catch(() => {})
+  status.textContent = 'Starting PiP…'
+
+  if (vid.requestPictureInPicture) {
+    vid.requestPictureInPicture()
+      .then(() => updateUI(true))
+      .catch(e => { status.textContent = 'PiP failed: ' + e.message })
+  } else if (vid.webkitSetPresentationMode) {
+    vid.webkitSetPresentationMode('picture-in-picture')
+    updateUI(true)
   }
 })
 
-vid.addEventListener('enterpictureinpicture', () => {
-  btn.textContent = 'Stop PiP'
-  btn.classList.add('active')
-  status.textContent = 'PiP active – screen stays on'
-})
-
-vid.addEventListener('leavepictureinpicture', () => {
-  btn.textContent = 'Start PiP'
-  btn.classList.remove('active')
-  status.textContent = 'PiP stopped'
-})
+vid.addEventListener('enterpictureinpicture', () => updateUI(true))
+vid.addEventListener('leavepictureinpicture', () => updateUI(false))
 
 vid.addEventListener('loadeddata', () => {
-  status.textContent = supportsPiP() ? 'Ready – tap Start PiP' : 'PiP not supported on this device'
-  btn.disabled = !supportsPiP()
-  if (!supportsPiP()) btn.classList.remove('enabled')
-  else btn.classList.add('enabled')
+  const ok = supportsPiP()
+  status.textContent = ok ? 'Ready – tap Start PiP' : 'PiP not supported on this device'
+  btn.disabled = !ok
+  btn.classList.toggle('enabled', ok)
 })
 
 vid.addEventListener('error', () => {
