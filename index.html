@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Caffein - Screen On</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  background:#111;
+  color:#eee;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  min-height:100dvh;gap:2rem;padding:2rem
+}
+h1{font-size:1.5rem;font-weight:600;letter-spacing:.05em;color:#888}
+.video-wrap{
+  position:relative;
+  width:64px;height:64px;
+  border-radius:12px;
+  overflow:hidden;
+  background:#000;
+  box-shadow:0 0 20px rgba(255,255,255,.05)
+}
+video{display:block;width:100%;height:100%;object-fit:cover}
+#status{font-size:.875rem;color:#555;text-align:center;line-height:1.5}
+#pipBtn{
+  all:unset;cursor:pointer;
+  padding:.75rem 2rem;
+  border-radius:999px;
+  background:#333;color:#eee;
+  font-size:1rem;font-weight:500;
+  transition:background .15s,transform .1s;
+  tap-highlight-color:transparent
+}
+#pipBtn:active{transform:scale(.95)}
+#pipBtn.enabled{background:#007aff}
+#pipBtn.active{background:#ff453a}
+#pipBtn:disabled{opacity:.3;cursor:default}
+#info{font-size:.75rem;color:#333;text-align:center;max-width:320px;line-height:1.6}
+</style>
+</head>
+<body>
+
+<h1>Caffein</h1>
+
+<div class="video-wrap">
+  <video id="vid" src="silent.mp4" autoplay muted loop playsinline></video>
+</div>
+
+<p id="status">Loading…</p>
+<button id="pipBtn">Start PiP</button>
+<p id="info">
+  iPhone で PiP 起動中は画面が消えにくい性質を利用し、<br>
+  小さな無音動画を常時再生してスリープを防止します
+</p>
+
+<script>
+const vid = document.getElementById('vid')
+const btn = document.getElementById('pipBtn')
+const status = document.getElementById('status')
+
+function supportsPiP() {
+  return 'requestPictureInPicture' in HTMLVideoElement.prototype ||
+    'webkitSetPresentationMode' in vid
+}
+
+async function startPiP() {
+  try {
+    if (vid.readyState < 2) {
+      status.textContent = 'Waiting for video…'
+      await new Promise(r => { vid.oncanplay = r; vid.load() })
+    }
+    await vid.play()
+    if (vid.requestPictureInPicture) {
+      await vid.requestPictureInPicture()
+    } else if (vid.webkitSetPresentationMode) {
+      vid.webkitSetPresentationMode('picture-in-picture')
+    }
+    btn.textContent = 'Stop PiP'
+    btn.classList.add('active')
+    status.textContent = 'PiP active – screen stays on'
+  } catch (e) {
+    status.textContent = 'PiP failed: ' + e.message
+  }
+}
+
+async function stopPiP() {
+  try {
+    if (document.pictureInPictureElement) {
+      await document.exitPictureInPicture()
+    } else if (vid.webkitPresentationMode === 'picture-in-picture') {
+      vid.webkitSetPresentationMode('inline')
+    }
+    btn.textContent = 'Start PiP'
+    btn.classList.remove('active')
+    status.textContent = 'PiP stopped'
+  } catch (e) {
+    status.textContent = 'Error: ' + e.message
+  }
+}
+
+btn.addEventListener('click', () => {
+  if (btn.textContent === 'Start PiP') {
+    startPiP()
+  } else {
+    stopPiP()
+  }
+})
+
+vid.addEventListener('enterpictureinpicture', () => {
+  btn.textContent = 'Stop PiP'
+  btn.classList.add('active')
+  status.textContent = 'PiP active – screen stays on'
+})
+
+vid.addEventListener('leavepictureinpicture', () => {
+  btn.textContent = 'Start PiP'
+  btn.classList.remove('active')
+  status.textContent = 'PiP stopped'
+})
+
+vid.addEventListener('loadeddata', () => {
+  status.textContent = supportsPiP() ? 'Ready – tap Start PiP' : 'PiP not supported on this device'
+  btn.disabled = !supportsPiP()
+  if (!supportsPiP()) btn.classList.remove('enabled')
+  else btn.classList.add('enabled')
+})
+
+vid.addEventListener('error', () => {
+  status.textContent = 'Video load failed'
+})
+</script>
+
+</body>
+</html>
