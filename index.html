@@ -39,6 +39,31 @@ video{display:block;width:100%;height:100%;object-fit:cover}
 #pipBtn.active{background:#ff453a}
 #pipBtn:disabled{opacity:.3;cursor:default}
 #info{font-size:.75rem;color:#333;text-align:center;max-width:320px;line-height:1.6}
+
+.timer-section{display:flex;flex-direction:column;align-items:center;gap:.75rem}
+.timer-presets{display:flex;gap:.5rem;flex-wrap:wrap;justify-content:center}
+.timer-presets button{
+  all:unset;cursor:pointer;
+  padding:.5rem 1rem;
+  border-radius:999px;
+  background:#222;color:#aaa;
+  font-size:.85rem;
+  transition:background .15s,transform .1s
+}
+.timer-presets button:active{transform:scale(.95)}
+.timer-presets button.active{background:#ff9f0a;color:#fff}
+#timerStatus{font-size:.875rem;color:#555;text-align:center;line-height:1.5}
+#timerCancel{
+  all:unset;cursor:pointer;
+  padding:.4rem 1rem;
+  border-radius:999px;
+  background:#ff453a;color:#fff;
+  font-size:.8rem;
+  display:none;
+  transition:transform .1s
+}
+#timerCancel:active{transform:scale(.95)}
+#timerCancel.visible{display:inline-block}
 </style>
 </head>
 <body>
@@ -51,6 +76,18 @@ video{display:block;width:100%;height:100%;object-fit:cover}
 
 <p id="status">Loading…</p>
 <button id="pipBtn">Start PiP</button>
+
+<div class="timer-section">
+  <p id="timerStatus">Sleep timer: Off</p>
+  <div class="timer-presets">
+    <button data-min="5">5 min</button>
+    <button data-min="15">15 min</button>
+    <button data-min="30">30 min</button>
+    <button data-min="60">60 min</button>
+  </div>
+  <button id="timerCancel">Cancel timer</button>
+</div>
+
 <p id="info">
   iPhone で PiP 起動中は画面が消えにくい性質を利用し、<br>
   小さな無音動画を常時再生してスリープを防止します
@@ -60,6 +97,13 @@ video{display:block;width:100%;height:100%;object-fit:cover}
 const vid = document.getElementById('vid')
 const btn = document.getElementById('pipBtn')
 const status = document.getElementById('status')
+const timerStatus = document.getElementById('timerStatus')
+const timerCancel = document.getElementById('timerCancel')
+const presetBtns = document.querySelectorAll('.timer-presets button')
+
+let sleepTimeout = null
+let remainingSeconds = 0
+let countdownInterval = null
 
 function supportsPiP() {
   return 'requestPictureInPicture' in HTMLVideoElement.prototype ||
@@ -71,6 +115,64 @@ function updateUI(pipOn) {
   btn.classList.toggle('active', pipOn)
   status.textContent = pipOn ? 'PiP active – screen stays on' : 'PiP stopped'
 }
+
+function clearSleepTimer() {
+  if (sleepTimeout) { clearTimeout(sleepTimeout); sleepTimeout = null }
+  if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null }
+  remainingSeconds = 0
+  timerStatus.textContent = 'Sleep timer: Off'
+  timerCancel.classList.remove('visible')
+  presetBtns.forEach(b => b.classList.remove('active'))
+}
+
+function formatTime(sec) {
+  const m = Math.floor(sec / 60)
+  const s = sec % 60
+  return m + ':' + String(s).padStart(2, '0')
+}
+
+function startSleepTimer(minutes) {
+  clearSleepTimer()
+  remainingSeconds = minutes * 60
+
+  timerStatus.textContent = 'Sleep timer: ' + formatTime(remainingSeconds)
+  timerCancel.classList.add('visible')
+
+  countdownInterval = setInterval(() => {
+    remainingSeconds--
+    if (remainingSeconds <= 0) {
+      clearSleepTimer()
+      return
+    }
+    timerStatus.textContent = 'Sleep timer: ' + formatTime(remainingSeconds)
+  }, 1000)
+
+  sleepTimeout = setTimeout(() => {
+    if (document.pictureInPictureElement) {
+      document.exitPictureInPicture().catch(() => {})
+    } else if (vid.webkitPresentationMode === 'picture-in-picture') {
+      vid.webkitSetPresentationMode('inline')
+    }
+    vid.pause()
+    clearSleepTimer()
+    timerStatus.textContent = 'Sleep timer: Finished – sleeping'
+  }, minutes * 60 * 1000)
+}
+
+presetBtns.forEach(b => {
+  b.addEventListener('click', () => {
+    const isActive = b.classList.contains('active')
+    if (isActive) {
+      clearSleepTimer()
+      return
+    }
+    presetBtns.forEach(x => x.classList.remove('active'))
+    b.classList.add('active')
+    startSleepTimer(parseInt(b.dataset.min, 10))
+  })
+})
+
+timerCancel.addEventListener('click', clearSleepTimer)
 
 btn.addEventListener('click', () => {
   if (document.pictureInPictureElement || vid.webkitPresentationMode === 'picture-in-picture') {
