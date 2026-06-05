@@ -144,6 +144,25 @@ function updateUI(pipOn) {
   status.textContent = pipOn ? 'PiP active – screen stays on' : 'PiP stopped'
 }
 
+function enterPiP() {
+  if (document.pictureInPictureElement || vid.webkitPresentationMode === 'picture-in-picture') return
+  vid.play().catch(() => {})
+  if (vid.requestPictureInPicture) {
+    vid.requestPictureInPicture().then(() => updateUI(true)).catch(() => {})
+  } else if (vid.webkitSetPresentationMode) {
+    vid.webkitSetPresentationMode('picture-in-picture')
+    updateUI(true)
+  }
+}
+
+function exitPiP() {
+  if (document.pictureInPictureElement) {
+    document.exitPictureInPicture().catch(() => {})
+  } else if (vid.webkitPresentationMode === 'picture-in-picture') {
+    vid.webkitSetPresentationMode('inline')
+  }
+}
+
 function clearSleepTimer() {
   if (sleepTimeout) { clearTimeout(sleepTimeout); sleepTimeout = null }
   if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null }
@@ -166,6 +185,8 @@ function startSleepTimer(minutes) {
   timerStatus.textContent = 'Sleep timer: ' + formatTime(remainingSeconds)
   timerCancel.classList.add('visible')
 
+  enterPiP()
+
   countdownInterval = setInterval(() => {
     remainingSeconds--
     if (remainingSeconds <= 0) {
@@ -176,11 +197,7 @@ function startSleepTimer(minutes) {
   }, 1000)
 
   sleepTimeout = setTimeout(() => {
-    if (document.pictureInPictureElement) {
-      document.exitPictureInPicture().catch(() => {})
-    } else if (vid.webkitPresentationMode === 'picture-in-picture') {
-      vid.webkitSetPresentationMode('inline')
-    }
+    exitPiP()
     vid.pause()
     clearSleepTimer()
     timerStatus.textContent = 'Sleep timer: Finished – sleeping'
@@ -216,11 +233,7 @@ timerCancel.addEventListener('click', clearSleepTimer)
 
 btn.addEventListener('click', () => {
   if (document.pictureInPictureElement || vid.webkitPresentationMode === 'picture-in-picture') {
-    if (document.exitPictureInPicture) {
-      document.exitPictureInPicture().catch(() => {})
-    } else if (vid.webkitSetPresentationMode) {
-      vid.webkitSetPresentationMode('inline')
-    }
+    exitPiP()
     return
   }
   if (!supportsPiP()) return
