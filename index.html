@@ -52,6 +52,27 @@ video{display:block;width:100%;height:100%;object-fit:cover}
 }
 .timer-presets button:active{transform:scale(.95)}
 .timer-presets button.active{background:#ff9f0a;color:#fff}
+.custom-input{display:flex;gap:.5rem;align-items:center}
+.custom-input input{
+  width:4rem;
+  padding:.4rem .5rem;
+  border:1px solid #444;border-radius:8px;
+  background:#222;color:#eee;
+  font-size:.85rem;text-align:center;
+  -moz-appearance:textfield
+}
+.custom-input input::-webkit-outer-spin-button,
+.custom-input input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.custom-input label{font-size:.8rem;color:#666}
+.custom-input button{
+  all:unset;cursor:pointer;
+  padding:.4rem .75rem;
+  border-radius:999px;
+  background:#007aff;color:#fff;
+  font-size:.8rem;
+  transition:transform .1s
+}
+.custom-input button:active{transform:scale(.95)}
 #timerStatus{font-size:.875rem;color:#555;text-align:center;line-height:1.5}
 #timerCancel{
   all:unset;cursor:pointer;
@@ -85,6 +106,11 @@ video{display:block;width:100%;height:100%;object-fit:cover}
     <button data-min="30">30 min</button>
     <button data-min="60">60 min</button>
   </div>
+  <div class="custom-input">
+    <input id="customMin" type="number" min="1" max="999" placeholder="min">
+    <label>min</label>
+    <button id="customSet">Set</button>
+  </div>
   <button id="timerCancel">Cancel timer</button>
 </div>
 
@@ -100,6 +126,8 @@ const status = document.getElementById('status')
 const timerStatus = document.getElementById('timerStatus')
 const timerCancel = document.getElementById('timerCancel')
 const presetBtns = document.querySelectorAll('.timer-presets button')
+const customMin = document.getElementById('customMin')
+const customSet = document.getElementById('customSet')
 
 let sleepTimeout = null
 let remainingSeconds = 0
@@ -168,8 +196,20 @@ presetBtns.forEach(b => {
     }
     presetBtns.forEach(x => x.classList.remove('active'))
     b.classList.add('active')
+    customMin.value = ''
     startSleepTimer(parseInt(b.dataset.min, 10))
   })
+})
+
+customSet.addEventListener('click', () => {
+  const v = parseInt(customMin.value, 10)
+  if (!v || v < 1) return
+  presetBtns.forEach(x => x.classList.remove('active'))
+  startSleepTimer(v)
+})
+
+customMin.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') customSet.click()
 })
 
 timerCancel.addEventListener('click', clearSleepTimer)
