@@ -3,103 +3,151 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
 <title>Caffein - Screen On</title>
 <style>
+:root{
+  --bg:#f7f6f2;
+  --fg:#1f1d1a;
+  --muted:#8d8a83;
+  --line:#dedbd2;
+  --panel:#ffffff;
+  --accent:#7a5c3e;
+  --accent-fg:#ffffff;
+  --danger:#a33b2e;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#161513;
+    --fg:#e6e2da;
+    --muted:#7d7a72;
+    --line:#33302b;
+    --panel:#1e1c1a;
+    --accent:#c9a877;
+    --accent-fg:#161513;
+    --danger:#c9584a;
+  }
+}
 *{margin:0;padding:0;box-sizing:border-box}
 body{
-  background:#111;
-  color:#eee;
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  background:var(--bg);
+  color:var(--fg);
+  font-family:ui-monospace,SFMono-Regular,Menlo,"Hiragino Kaku Gothic ProN",monospace;
   display:flex;flex-direction:column;
   align-items:center;justify-content:center;
-  min-height:100dvh;gap:2rem;padding:2rem
+  min-height:100dvh;gap:2.25rem;padding:2rem
 }
-h1{font-size:1.5rem;font-weight:600;letter-spacing:.05em;color:#888}
+header{display:flex;flex-direction:column;align-items:center;gap:.35rem}
+h1{font-size:1.05rem;font-weight:700;letter-spacing:.35em;text-transform:uppercase;color:var(--fg)}
+h1 span{color:var(--accent)}
+.tagline{font-size:.7rem;color:var(--muted);letter-spacing:.08em}
+
 .video-wrap{
-  position:relative;
-  width:64px;height:64px;
-  border-radius:12px;
+  width:min(420px,88vw);
+  aspect-ratio:30/1;
   overflow:hidden;
-  background:#000;
-  box-shadow:0 0 20px rgba(255,255,255,.05)
+  border:1px solid var(--line);
+  background:#000
 }
 video{display:block;width:100%;height:100%;object-fit:cover}
-#status{font-size:.875rem;color:#555;text-align:center;line-height:1.5}
+@media (prefers-color-scheme: light){
+  video{filter:none}
+}
+
+#status{font-size:.75rem;color:var(--muted);letter-spacing:.05em}
+#status::before{content:"— ";color:var(--accent)}
+
 #pipBtn{
   all:unset;cursor:pointer;
-  padding:.75rem 2rem;
-  border-radius:999px;
-  background:#333;color:#eee;
-  font-size:1rem;font-weight:500;
-  transition:background .15s,transform .1s;
+  padding:.65rem 2.4rem;
+  border:1px solid var(--fg);
+  background:transparent;color:var(--fg);
+  font-size:.8rem;font-weight:600;letter-spacing:.15em;text-transform:uppercase;
+  transition:background .12s,color .12s,transform .1s;
   tap-highlight-color:transparent
 }
-#pipBtn:active{transform:scale(.95)}
-#pipBtn.enabled{background:#007aff}
-#pipBtn.active{background:#ff453a}
-#pipBtn:disabled{opacity:.3;cursor:default}
-#info{font-size:.75rem;color:#333;text-align:center;max-width:320px;line-height:1.6}
+#pipBtn:hover:not(:disabled){background:var(--fg);color:var(--bg)}
+#pipBtn:active{transform:translateY(1px)}
+#pipBtn.active{border-color:var(--danger);color:var(--danger)}
+#pipBtn.active:hover{background:var(--danger);color:var(--bg)}
+#pipBtn:disabled{opacity:.25;cursor:default}
 
-.timer-section{display:flex;flex-direction:column;align-items:center;gap:.75rem}
-.timer-presets{display:flex;gap:.5rem;flex-wrap:wrap;justify-content:center}
+.rule{width:min(420px,88vw);height:1px;background:var(--line)}
+
+.timer-section{display:flex;flex-direction:column;align-items:center;gap:.9rem;width:min(420px,88vw)}
+.section-label{font-size:.65rem;color:var(--muted);letter-spacing:.3em;text-transform:uppercase}
+.timer-presets{display:flex;gap:.4rem;flex-wrap:wrap;justify-content:center}
 .timer-presets button{
   all:unset;cursor:pointer;
-  padding:.5rem 1rem;
-  border-radius:999px;
-  background:#222;color:#aaa;
-  font-size:.85rem;
-  transition:background .15s,transform .1s
+  padding:.35rem .8rem;
+  border:1px solid var(--line);
+  background:transparent;color:var(--muted);
+  font-size:.75rem;letter-spacing:.05em;
+  transition:all .12s
 }
-.timer-presets button:active{transform:scale(.95)}
-.timer-presets button.active{background:#ff9f0a;color:#fff}
+.timer-presets button:hover{border-color:var(--fg);color:var(--fg)}
+.timer-presets button:active{transform:translateY(1px)}
+.timer-presets button.active{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
 .custom-input{display:flex;gap:.5rem;align-items:center}
 .custom-input input{
-  width:4rem;
-  padding:.4rem .5rem;
-  border:1px solid #444;border-radius:8px;
-  background:#222;color:#eee;
-  font-size:.85rem;text-align:center;
+  width:4.5rem;
+  padding:.35rem .5rem;
+  border:1px solid var(--line);
+  background:transparent;color:var(--fg);
+  font:inherit;font-size:.8rem;text-align:center;
   -moz-appearance:textfield
 }
+.custom-input input:focus{outline:none;border-color:var(--fg)}
 .custom-input input::-webkit-outer-spin-button,
 .custom-input input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
-.custom-input label{font-size:.8rem;color:#666}
+.custom-input label{font-size:.7rem;color:var(--muted)}
 .custom-input button{
   all:unset;cursor:pointer;
-  padding:.4rem .75rem;
-  border-radius:999px;
-  background:#007aff;color:#fff;
-  font-size:.8rem;
+  padding:.35rem .8rem;
+  border:1px solid var(--accent);
+  background:var(--accent);color:var(--accent-fg);
+  font-size:.7rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
   transition:transform .1s
 }
-.custom-input button:active{transform:scale(.95)}
-#timerStatus{font-size:.875rem;color:#555;text-align:center;line-height:1.5}
+.custom-input button:active{transform:translateY(1px)}
+#timerStatus{font-size:.75rem;color:var(--muted);letter-spacing:.05em}
 #timerCancel{
   all:unset;cursor:pointer;
-  padding:.4rem 1rem;
-  border-radius:999px;
-  background:#ff453a;color:#fff;
-  font-size:.8rem;
+  padding:.3rem .8rem;
+  border:1px solid var(--danger);color:var(--danger);
+  background:transparent;
+  font-size:.7rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
   display:none;
-  transition:transform .1s
+  transition:all .12s
 }
-#timerCancel:active{transform:scale(.95)}
+#timerCancel:hover{background:var(--danger);color:var(--bg)}
+#timerCancel:active{transform:translateY(1px)}
 #timerCancel.visible{display:inline-block}
+
+#info{
+  font-size:.7rem;color:var(--muted);text-align:center;
+  max-width:340px;line-height:1.9;letter-spacing:.03em
+}
 </style>
 </head>
 <body>
 
-<h1>Caffein</h1>
+<header>
+  <h1>Caff<span>ein</span></h1>
+  <p class="tagline">keep the screen awake</p>
+</header>
 
 <div class="video-wrap">
-  <video id="vid" src="silent.mp4" autoplay muted loop playsinline></video>
+  <video id="vid" autoplay muted loop playsinline></video>
 </div>
 
 <p id="status">Loading…</p>
 <button id="pipBtn">Start PiP</button>
 
+<div class="rule"></div>
+
 <div class="timer-section">
-  <p id="timerStatus">Sleep timer: Off</p>
+  <p class="section-label">Sleep timer</p>
   <div class="timer-presets">
     <button data-min="5">5 min</button>
     <button data-min="15">15 min</button>
@@ -111,6 +159,7 @@ video{display:block;width:100%;height:100%;object-fit:cover}
     <label>min</label>
     <button id="customSet">Set</button>
   </div>
+  <p id="timerStatus">Sleep timer: Off</p>
   <button id="timerCancel">Cancel timer</button>
 </div>
 
@@ -128,6 +177,25 @@ const timerCancel = document.getElementById('timerCancel')
 const presetBtns = document.querySelectorAll('.timer-presets button')
 const customMin = document.getElementById('customMin')
 const customSet = document.getElementById('customSet')
+
+const darkMq = matchMedia('(prefers-color-scheme: dark)')
+
+function videoSrc() {
+  return darkMq.matches ? 'silent-dark.mp4' : 'silent-light.mp4'
+}
+
+// Set initial video (light mode → white video, dark mode → black video)
+vid.src = videoSrc()
+
+// Swap video if scheme changes while not playing
+darkMq.addEventListener('change', () => {
+  if (!document.pictureInPictureElement && vid.webkitPresentationMode !== 'picture-in-picture') {
+    const t = vid.currentTime
+    vid.src = videoSrc()
+    vid.currentTime = t
+    vid.play().catch(() => {})
+  }
+})
 
 let sleepTimeout = null
 let remainingSeconds = 0
@@ -258,7 +326,6 @@ vid.addEventListener('loadeddata', () => {
   const ok = supportsPiP()
   status.textContent = ok ? 'Ready – tap Start PiP' : 'PiP not supported on this device'
   btn.disabled = !ok
-  btn.classList.toggle('enabled', ok)
 })
 
 vid.addEventListener('error', () => {
